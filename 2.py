@@ -21,7 +21,7 @@ def drawBoard(board):
     st.write('   |   |')
 
 letter = st.sidebar.text_input('please input X or O?' , 'X O')
-move = st.sidebar.text_input2
+move = st.sidebar.text_input('What is your next move? (1-9)')
 
 
 
