@@ -20,15 +20,18 @@ def drawBoard(board):
     st.write(' ' + board[1] + ' | ' + board[2] + ' | ' + board[3])
     st.write('   |   |')
 
+#letter = st.sidebar.text_input('please input X or O?' , 'X O')
+
 def inputPlayerLetter():
     # Lets the player type which letter they want to be.
     # Returns a list with the player’s letter as the first item, and the computer's letter as the second.
     letter = ''
     while not (letter == 'X' or letter == 'O'):
         st.write('Do you want to be X or O?')
-        letter = st.text_input('please input X or O?' , 'X O')
+        #letter = st.sider.text_input('please input X or O?' , 'X O')
+        letter = st.sidebar.text_input('please input X or O?' , 'X O')
         letter = letter.upper()
-
+    
     # the first element in the list is the player’s letter, the second is the computer's letter.
     if letter == 'X':
         return ['X', 'O']
@@ -41,11 +44,11 @@ def whoGoesFirst():
         return 'computer'
     else:
         return 'player'
-
+    
 def playAgain():
     # This function returns True if the player wants to play again, otherwise it returns False.
     st.write('Do you want to play again? (yes or no)')
-    return input().lower().startswith('y')
+    return st.sider.text_input.lower().startswith('y')
 
 # 下子
 def makeMove(board, letter, move):
@@ -77,12 +80,14 @@ def isSpaceFree(board, move):
     # 判斷這個位置是否有子，沒子返回True
     return board[move] == ' '
 
+move = st.sidebar.text_input
+
 def getPlayerMove(board):
     # 玩家落子
     move = ' '
     while move not in '1 2 3 4 5 6 7 8 9'.split() or not isSpaceFree(board, int(move)):
         st.write('What is your next move? (1-9)')
-        move = input()
+        #move = st.sidebar.text_input
     return int(move)
 
 def chooseRandomMoveFromList(board, movesList):
