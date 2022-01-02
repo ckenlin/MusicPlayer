@@ -16,7 +16,7 @@ class TicTacToe(object):
     # start the game
     def start(self):
         """Loop game dynamics until game has ended, print result, play again?"""
-        print " \nWelcome to Tic Tac Toe
+        print ' \nWelcome to Tic Tac Toe '
         # init resets the board
         self.__init__()
         while self.playing:
