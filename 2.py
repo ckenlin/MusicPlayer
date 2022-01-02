@@ -130,7 +130,7 @@ class TicTacToe(object):
         """check if move to (row, col) is valid"""
         # check if position coords are on board
         if not self.board.is_move_on_board(row, col):
-            print "that position is not on the board"
+            print ("that position is not on the board")
             return False
         # check whether position is free
         elif not self.board.is_cell_free(row, col):
