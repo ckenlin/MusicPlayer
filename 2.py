@@ -1,69 +1,187 @@
-import pygame as pg#import pygame module
-from pygame.locals import QUIT,MOUSEBUTTONUP
-pg.init()#初始化
-pg.display.set_caption("ooxx")#視窗左上角名稱
-screen = pg.display.set_mode((200,200))#視窗大小
-screen.fill((0,0,0))#視窗顏色
-clock = pg.time.Clock()
-font = pg.font.SysFont("arial",20)#字體大小
 
-left = False
-win = 0
-player = 1#預設為1P
-data = [[0,0,0],[0,0,0],[0,0,0]]#建立一個3x3陣列
+def cases(case,position,xo,list):
+    if case[position]!='X' and case[position]!='Y':
+        case[position]=xo.upper()
+        list.append(str(position+1))
+        return True
+    else :
+        print('Space ',position+1,'is not empty')
+        #print_board(list)
+        return False
 
-main_surface = pg.Surface((200,200))#建立主要圖層
-pg.draw.rect(main_surface,(150,150,150),[25,25,150,150],3)#畫出格線
-pg.draw.line(main_surface,(150,150,150),(25,75),(175,75),3)
-pg.draw.line(main_surface,(150,150,150),(25,125),(175,125),3)
-pg.draw.line(main_surface,(150,150,150),(75,25),(75,175),3)
-pg.draw.line(main_surface,(150,150,150),(125,25),(125,175),3)
 
-while 1:
-    x,y = pg.mouse.get_pos()#滑鼠游標的座標
-    left = pg.mouse.get_pressed()[0]#滑鼠左鍵是否被按下
-    for event in pg.event.get():#退出遊戲判定
-        if event.type == QUIT:
-            pg.quit()
+def cases_full(case):
+    ck=0
+    for c in case:
+        if c=='X'or c=='Y':
+            ck=1
+        else:
+            ck=0 
             break
-        if event.type == MOUSEBUTTONUP:#滑鼠鍵放開判定
-            if left:
-                left = "depress"#如果滑鼠左鍵放開,則把left設為depress
-    
-    prompt_surface = pg.Surface((200,25))#建立空的提示圖層
-    if win == -1:#平手
-        prompt_surface.blit(font.render("No one won...",True,(255,255,255)),(50,0))#印出沒人贏
-    elif win == 1 or win == 2:#某人贏了
-        prompt_surface.blit(font.render("P%d win!"%win,True,(255,255,255)),(75,0))#印出誰贏
-    elif left == "depress" and abs(x-100) < 75 and abs(y-100) < 75:#滑鼠按下判定區
-        i,j = int((x-25)//50),int((y-25)//50)#計算行列
-        if data[i][j] == 0:#空格子才能選
-            if player == 1:
-                data[i][j] = 1
-                pg.draw.circle(main_surface,(50,255,50),(50+50*i,50+50*j),15,3)#P1畫圈
-                player = 2#換人
-            elif player == 2:
-                data[i][j] = 2
-                pg.draw.line(main_surface,(255,50,50),(40+50*i,40+50*j),(60+50*i,60+50*j),5)#P1畫叉
-                pg.draw.line(main_surface,(255,50,50),(40+50*i,60+50*j),(60+50*i,40+50*j),5)
-                player = 1#換人
-    else:
-        prompt_surface.blit(font.render("It's P%d turn"%player,True,(255,255,255)),(60,0))#印出輪到誰
-    
-    if [i.count(1) == 3 for i in data].count(True) > 0 or\
-       [i.count(1) == 3 for i in zip(data[0],data[1],data[2])].count(True) > 0 or\
-       [data[i][i] for i in range(3)].count(1) == 3 or\
-       [data[i][2-i] for i in range(3)].count(1) == 3:#判定是誰連成線
-        win = 1
-    elif [i.count(2) == 3 for i in data].count(True) > 0 or\
-         [i.count(2) == 3 for i in zip(data[0],data[1],data[2])].count(True) > 0 or\
-         [data[i][i] for i in range(3)].count(2) == 3 or\
-         [data[i][2-i] for i in range(3)].count(2) == 3:
-        win = 2
-    elif sum(i.count(0) for i in data) == 0:#如果框全被占滿但沒人連成線
-        win = -1
-    
-    screen.blit(main_surface,(0,0))#把圖層貼在視窗上
-    screen.blit(prompt_surface,(0,175))#印出提示圖層
-    pg.display.update()#更新視窗頁面(很重要)
-    clock.tick(30)
+    if ck==1:
+        print("It's a draw!!")
+        return True
+    else: return False
+
+
+def chek_winner(list):
+    result = ['123', '159', '456', '357', '963', '789', '741','852']
+    for i in result:
+        cc = 0
+        for j in list:
+            if j in i:
+                cc = cc+1
+            if cc == 3:
+                cc = 0
+                return True
+            if j == list[-1] and cc != 3:
+                cc = 0
+                break              
+    return False
+
+
+def print_board(case):
+    num=['1','2','3','4','5','6','7','8','9']
+  
+    print(f'\n {case[6]} | {case[7]} | {case[8]}')
+    print('-----------')
+    print(f' {case[3]} | {case[4]} | {case[5]}')
+    print('-----------')
+    print(f' {case[0]} | {case[1]} | {case[2]}\n')
+
+
+def play():
+    done=False 
+    player1_score=0
+    player2_score=0
+    name={'player1':'','player2':''}
+    while True:
+        name['player1']=input('Hey player1 Enter your first name:').title()
+        if name['player1']!='':
+            break
+        else :
+            print("Please reenter your name!")
+    while True:
+        name['player2']=input('Hey player2 Enter your first name:').title()
+        if name['player2']!='':
+            break
+        else :
+            print("Please reenter your name!")
+   
+    while done!=True:
+        k = []
+        case=['1','2','3','4','5','6','7','8','9']
+        print('Picking up a random player to start...')
+        from random import randint
+        n=randint(1, 2)
+  
+        if n==1:
+            print('{} is going to start'.format(name['player1']),'first')
+            while True:
+                XO1 = input('Chose between X or Y:')  
+                if XO1.upper()=='X' or XO1.upper()=='Y':
+                    break
+                else :
+                    print( name['player1']+" Please chose between X and Y!")
+ 
+            if XO1.upper()=='X':
+                XO2='Y'
+            else:
+                XO2 = 'X'
+            k.append(1)
+            k.append(2)
+        else : 
+            print('{} is going to start'.format(name['player2']),'first')
+           
+            while True:
+                XO2 = input('Chose between X or Y:')   
+                if  XO2.upper()=='X' or  XO2.upper()=='Y':
+                    break
+                else :
+                    print(name['player2']+" Please chose between X and Y!")
+
+            if XO2.upper() == 'X':
+                XO1 = 'Y'
+            else:
+                XO1 = 'X'
+            k.append(2)
+            k.append(1)
+        end= False
+        l1=[]
+        l2=[]
+        c=0
+        print('\n||---',name['player2'],'Score:',player2_score,'---||---',name['player1'],'Score:',player1_score,'---||')
+
+        while end !=True:
+            for i in k:
+                if end== True:
+                    break
+                print_board(case)
+                if i==1:
+                    while True:
+                        while True:
+                            c = input('{} Where do you want to put your {}:'.format(name['player1'],XO1))
+                            if c!='' and not c.isalpha():
+                                break
+                            else:
+                                print('please chose a number between 1 & 9!')
+                        print('\033[H\033[J')
+                        if cases(case,int(c)-1,XO1,l1)==True:
+                            break
+                        else:
+                            print('please chose !!')
+                            print_board(case)
+                       
+                else :
+                    while True:
+                        while True:
+                            c = input('{} Where do you want to put your {}:'.format(name['player2'],XO2))
+                            
+                            if c!='' and not c.isalpha():
+                                break
+                            else:
+                                print('please chose a number between 1 & 9!')
+                        print('\033[H\033[J')
+                        if cases(case, int(c)-1, XO2,l2)==True:
+                            break
+                        else:
+                            print('please chose one of the free spaces available!!')
+                            print_board(case)
+                        
+                           
+                if len(l1)>=3 :
+                 if chek_winner(l1):
+                     print(name['player1'],'you are the winner!!')
+                     player1_score+=1
+                     print_board(case)
+                     end=True
+                     break
+                        
+                if len(l2) >= 3:
+                    if chek_winner(l2):
+                         print(name['player2'],'You are the WINNER!!')
+                         player2_score+=1
+                         print_board(case)
+                         end=True
+                         break
+                if cases_full(case) == True:
+                    end=True
+                    print_board(case)
+                    break
+        while True:
+            answer =input('If you want to continue playing type YES/Y else type NO/N ')
+            if answer.upper()=='YES' or answer.upper()=='Y' :
+                print("Lets go again...")
+                break
+            elif answer.upper()=='NO' or answer.upper()=='N' : 
+                done=True  
+                player1_score=0
+                player2_score=0
+                print ('Thanks for playing. See you next time ;)')
+                break
+            else :
+                print('Please chose from one of the options you have!!')
+            
+               
+play()
+
