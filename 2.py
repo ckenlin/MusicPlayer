@@ -1,214 +1,207 @@
-# Author: aqeelanwar
-# Created: 12 March,2020, 7:06 PM
-# Email: aqeel.anwar@gatech.edu
-
 from tkinter import *
-import numpy as np
+from tkinter import ttk
+import tkinter.messagebox
 
-size_of_board = 600
-symbol_size = (size_of_board / 3 - size_of_board / 8) / 2
-symbol_thickness = 50
-symbol_X_color = '#EE4035'
-symbol_O_color = '#0492CF'
-Green_color = '#7BC043'
+root=Tk()
+root.title("Tic Tac Toe")
+#add Buttons
+bu1=ttk.Button(root,text=' ')
+bu1.grid(row=0,column=0,sticky='snew',ipadx=40,ipady=40)
+bu1.config(command=lambda: ButtonClick(1))
 
+bu2=ttk.Button(root,text=' ')
+bu2.grid(row=0,column=1,sticky='snew',ipadx=40,ipady=40)
+bu2.config(command=lambda: ButtonClick(2))
 
-class Tic_Tac_Toe():
-    # ------------------------------------------------------------------
-    # Initialization Functions:
-    # ------------------------------------------------------------------
-    def __init__(self):
-        self.window = Tk()
-        self.window.title('Tic-Tac-Toe')
-        self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
-        self.canvas.pack()
-        # Input from user in form of clicks
-        self.window.bind('<Button-1>', self.click)
+bu3=ttk.Button(root,text=' ')
+bu3.grid(row=0,column=2,sticky='snew',ipadx=40,ipady=40)
+bu3.config(command=lambda: ButtonClick(3))
 
-        self.initialize_board()
-        self.player_X_turns = True
-        self.board_status = np.zeros(shape=(3, 3))
+bu4=ttk.Button(root,text=' ')
+bu4.grid(row=1,column=0,sticky='snew',ipadx=40,ipady=40)
+bu4.config(command=lambda: ButtonClick(4))
 
-        self.player_X_starts = True
-        self.reset_board = False
-        self.gameover = False
-        self.tie = False
-        self.X_wins = False
-        self.O_wins = False
+bu5=ttk.Button(root,text=' ')
+bu5.grid(row=1,column=1,sticky='snew',ipadx=40,ipady=40)
+bu5.config(command=lambda: ButtonClick(5))
 
-        self.X_score = 0
-        self.O_score = 0
-        self.tie_score = 0
+bu6=ttk.Button(root,text=' ')
+bu6.grid(row=1,column=2,sticky='snew',ipadx=40,ipady=40)
+bu6.config(command=lambda: ButtonClick(6))
 
-    def mainloop(self):
-        self.window.mainloop()
+bu7=ttk.Button(root,text=' ')
+bu7.grid(row=2,column=0,sticky='snew',ipadx=40,ipady=40)
+bu7.config(command=lambda: ButtonClick(7))
 
-    def initialize_board(self):
-        for i in range(2):
-            self.canvas.create_line((i + 1) * size_of_board / 3, 0, (i + 1) * size_of_board / 3, size_of_board)
+bu8=ttk.Button(root,text=' ')
+bu8.grid(row=2,column=1,sticky='snew',ipadx=40,ipady=40)
+bu8.config(command=lambda: ButtonClick(8))
 
-        for i in range(2):
-            self.canvas.create_line(0, (i + 1) * size_of_board / 3, size_of_board, (i + 1) * size_of_board / 3)
+bu9=ttk.Button(root,text=' ')
+bu9.grid(row=2,column=2,sticky='snew',ipadx=40,ipady=40)
+bu9.config(command=lambda: ButtonClick(9))
 
-    def play_again(self):
-        self.initialize_board()
-        self.player_X_starts = not self.player_X_starts
-        self.player_X_turns = self.player_X_starts
-        self.board_status = np.zeros(shape=(3, 3))
+playerturn=ttk.Label(root,text="   Player 1 turn!  ")
+playerturn.grid(row=3,column=0,sticky='snew',ipadx=40,ipady=40)
 
-    # ------------------------------------------------------------------
-    # Drawing Functions:
-    # The modules required to draw required game based object on canvas
-    # ------------------------------------------------------------------
+playerdetails=ttk.Label(root,text="    Player 1 is X\n\n    Player 2 is O")
+playerdetails.grid(row=3,column=2,sticky='snew',ipadx=40,ipady=40)
 
-    def draw_O(self, logical_position):
-        logical_position = np.array(logical_position)
-        # logical_position = grid value on the board
-        # grid_position = actual pixel values of the center of the grid
-        grid_position = self.convert_logical_to_grid_position(logical_position)
-        self.canvas.create_oval(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness,
-                                outline=symbol_O_color)
+res=ttk.Button(root,text='Restart')
+res.grid(row=3,column=1,sticky='snew',ipadx=40,ipady=40)
+res.config(command=lambda: restartbutton())
 
-    def draw_X(self, logical_position):
-        grid_position = self.convert_logical_to_grid_position(logical_position)
-        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness,
-                                fill=symbol_X_color)
-        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] + symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
-                                fill=symbol_X_color)
-
-    def display_gameover(self):
-
-        if self.X_wins:
-            self.X_score += 1
-            text = 'Winner: Player 1 (X)'
-            color = symbol_X_color
-        elif self.O_wins:
-            self.O_score += 1
-            text = 'Winner: Player 2 (O)'
-            color = symbol_O_color
-        else:
-            self.tie_score += 1
-            text = 'Its a tie'
-            color = 'gray'
-
-        self.canvas.delete("all")
-        self.canvas.create_text(size_of_board / 2, size_of_board / 3, font="cmr 60 bold", fill=color, text=text)
-
-        score_text = 'Scores \n'
-        self.canvas.create_text(size_of_board / 2, 5 * size_of_board / 8, font="cmr 40 bold", fill=Green_color,
-                                text=score_text)
-
-        score_text = 'Player 1 (X) : ' + str(self.X_score) + '\n'
-        score_text += 'Player 2 (O): ' + str(self.O_score) + '\n'
-        score_text += 'Tie                    : ' + str(self.tie_score)
-        self.canvas.create_text(size_of_board / 2, 3 * size_of_board / 4, font="cmr 30 bold", fill=Green_color,
-                                text=score_text)
-        self.reset_board = True
-
-        score_text = 'Click to play again \n'
-        self.canvas.create_text(size_of_board / 2, 15 * size_of_board / 16, font="cmr 20 bold", fill="gray",
-                                text=score_text)
-
-    # ------------------------------------------------------------------
-    # Logical Functions:
-    # The modules required to carry out game logic
-    # ------------------------------------------------------------------
-
-    def convert_logical_to_grid_position(self, logical_position):
-        logical_position = np.array(logical_position, dtype=int)
-        return (size_of_board / 3) * logical_position + size_of_board / 6
-
-    def convert_grid_to_logical_position(self, grid_position):
-        grid_position = np.array(grid_position)
-        return np.array(grid_position // (size_of_board / 3), dtype=int)
-
-    def is_grid_occupied(self, logical_position):
-        if self.board_status[logical_position[0]][logical_position[1]] == 0:
-            return False
-        else:
-            return True
-
-    def is_winner(self, player):
-
-        player = -1 if player == 'X' else 1
-
-        # Three in a row
-        for i in range(3):
-            if self.board_status[i][0] == self.board_status[i][1] == self.board_status[i][2] == player:
-                return True
-            if self.board_status[0][i] == self.board_status[1][i] == self.board_status[2][i] == player:
-                return True
-
-        # Diagonals
-        if self.board_status[0][0] == self.board_status[1][1] == self.board_status[2][2] == player:
-            return True
-
-        if self.board_status[0][2] == self.board_status[1][1] == self.board_status[2][0] == player:
-            return True
-
-        return False
-
-    def is_tie(self):
-
-        r, c = np.where(self.board_status == 0)
-        tie = False
-        if len(r) == 0:
-            tie = True
-
-        return tie
-
-    def is_gameover(self):
-        # Either someone wins or all grid occupied
-        self.X_wins = self.is_winner('X')
-        if not self.X_wins:
-            self.O_wins = self.is_winner('O')
-
-        if not self.O_wins:
-            self.tie = self.is_tie()
-
-        gameover = self.X_wins or self.O_wins or self.tie
-
-        if self.X_wins:
-            print('X wins')
-        if self.O_wins:
-            print('O wins')
-        if self.tie:
-            print('Its a tie')
-
-        return gameover
+a=1
+b=0
+c=0
+def restartbutton():
+    global a,b,c
+    a=1
+    b=0
+    c=0
+    playerturn['text']="   Player 1 turn!   "
+    bu1['text']=' '
+    bu2['text']=' '
+    bu3['text']=' '
+    bu4['text']=' '
+    bu5['text']=' '
+    bu6['text']=' '
+    bu7['text']=' '
+    bu8['text']=' '
+    bu9['text']=' '
+    bu1.state(['!disabled'])
+    bu2.state(['!disabled'])
+    bu3.state(['!disabled'])
+    bu4.state(['!disabled'])
+    bu5.state(['!disabled'])
+    bu6.state(['!disabled'])
+    bu7.state(['!disabled'])
+    bu8.state(['!disabled'])
+    bu9.state(['!disabled'])
+    
+#after getting result(win or loss or draw) disable button
+def disableButton():
+    bu1.state(['disabled'])
+    bu2.state(['disabled'])
+    bu3.state(['disabled'])
+    bu4.state(['disabled'])
+    bu5.state(['disabled'])
+    bu6.state(['disabled'])
+    bu7.state(['disabled'])
+    bu8.state(['disabled'])
+    bu9.state(['disabled'])
 
 
+def ButtonClick(id):
+    global a,b,c
+    print("ID:{}".format(id))
 
+    #for player 1 turn
+    if id==1 and bu1['text']==' ' and a==1:
+        bu1['text']="X"
+        a=0
+        b+=1
+    if id==2 and bu2['text']==' ' and a==1:
+        bu2['text']="X"
+        a=0
+        b+=1
+    if id==3 and bu3['text']==' ' and a==1:
+        bu3['text']="X"
+        a=0
+        b+=1
+    if id==4 and bu4['text']==' ' and a==1:
+        bu4['text']="X"
+        a=0
+        b+=1
+    if id==5 and bu5['text']==' ' and a==1:
+        bu5['text']="X"
+        a=0
+        b+=1
+    if id==6 and bu6['text']==' ' and a==1:
+        bu6['text']="X"
+        a=0
+        b+=1
+    if id==7 and bu7['text']==' ' and a==1:
+        bu7['text']="X"
+        a=0
+        b+=1
+    if id==8 and bu8['text']==' ' and a==1:
+        bu8['text']="X"
+        a=0
+        b+=1
+    if id==9 and bu9['text']==' ' and a==1:
+        bu9['text']="X"
+        a=0
+        b+=1
+    #for player 2 turn
+    if id==1 and bu1['text']==' ' and a==0:
+        bu1['text']="O"
+        a=1
+        b+=1
+    if id==2 and bu2['text']==' ' and a==0:
+        bu2['text']="O"
+        a=1
+        b+=1
+    if id==3 and bu3['text']==' ' and a==0:
+        bu3['text']="O"
+        a=1
+        b+=1
+    if id==4 and bu4['text']==' ' and a==0:
+        bu4['text']="O"
+        a=1
+        b+=1
+    if id==5 and bu5['text']==' ' and a==0:
+        bu5['text']="O"
+        a=1
+        b+=1
+    if id==6 and bu6['text']==' ' and a==0:
+        bu6['text']="O"
+        a=1
+        b+=1
+    if id==7 and bu7['text']==' ' and a==0:
+        bu7['text']="O"
+        a=1
+        b+=1
+    if id==8 and bu8['text']==' ' and a==0:
+        bu8['text']="O"
+        a=1
+        b+=1
+    if id==9 and bu9['text']==' ' and a==0:
+        bu9['text']="O"
+        a=1
+        b+=1
+        
+    #checking for winner   
+    if( bu1['text']=='X' and bu2['text']=='X' and bu3['text']=='X' or
+        bu4['text']=='X' and bu5['text']=='X' and bu6['text']=='X' or
+        bu7['text']=='X' and bu8['text']=='X' and bu9['text']=='X' or
+        bu1['text']=='X' and bu4['text']=='X' and bu7['text']=='X' or
+        bu2['text']=='X' and bu5['text']=='X' and bu8['text']=='X' or
+        bu3['text']=='X' and bu6['text']=='X' and bu9['text']=='X' or
+        bu1['text']=='X' and bu5['text']=='X' and bu9['text']=='X' or
+        bu3['text']=='X' and bu5['text']=='X' and bu7['text']=='X'):
+            disableButton()
+            c=1
+            tkinter.messagebox.showinfo("Tic Tac Toe","Winner is player 1")
+    elif( bu1['text']=='O' and bu2['text']=='O' and bu3['text']=='O' or
+        bu4['text']=='O' and bu5['text']=='O' and bu6['text']=='O' or
+        bu7['text']=='O' and bu8['text']=='O' and bu9['text']=='O' or
+        bu1['text']=='O' and bu4['text']=='O' and bu7['text']=='O' or
+        bu2['text']=='O' and bu5['text']=='O' and bu8['text']=='O' or
+        bu3['text']=='O' and bu6['text']=='O' and bu9['text']=='O' or
+        bu1['text']=='O' and bu5['text']=='O' and bu9['text']=='O' or
+        bu3['text']=='O' and bu5['text']=='O' and bu7['text']=='O'):
+            disableButton()
+            c=1
+            tkinter.messagebox.showinfo("Tic Tac Toe","Winner is player 2")
+    elif b==9:
+            disableButton()
+            c=1
+            tkinter.messagebox.showinfo("Tic Tac Toe","Match is Draw.")
 
-
-    def click(self, event):
-        grid_position = [event.x, event.y]
-        logical_position = self.convert_grid_to_logical_position(grid_position)
-
-        if not self.reset_board:
-            if self.player_X_turns:
-                if not self.is_grid_occupied(logical_position):
-                    self.draw_X(logical_position)
-                    self.board_status[logical_position[0]][logical_position[1]] = -1
-                    self.player_X_turns = not self.player_X_turns
-            else:
-                if not self.is_grid_occupied(logical_position):
-                    self.draw_O(logical_position)
-                    self.board_status[logical_position[0]][logical_position[1]] = 1
-                    self.player_X_turns = not self.player_X_turns
-
-            # Check if game is concluded
-            if self.is_gameover():
-                self.display_gameover()
-                # print('Done')
-        else:  # Play Again
-            self.canvas.delete("all")
-            self.play_again()
-            self.reset_board = False
-
-
-game_instance = Tic_Tac_Toe()
-game_instance.mainloop()
+    if a==1 and c==0:
+        playerturn['text']="   Player 1 turn!   "
+    elif a==0 and c==0:
+        playerturn['text']="   Player 2 turn!   "
+            
+root.mainloop()
