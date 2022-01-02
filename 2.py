@@ -169,13 +169,13 @@ class Board:
         print (row1[0] + "|" + row1[1] + "|" + row1[2])
         
         # print horizontal line
-        print "-----"
+        print ("-----")
         
         # print second row
         print (row2[0] + "|" + row2[1] + "|" + row2[2])
         
         # print horizontal line
-        print "-----"
+        print ("-----")
         
         # print third row    
         print (row3[0] + "|" + row3[1] + "|" + row3[2])
