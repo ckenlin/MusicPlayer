@@ -1,187 +1,221 @@
+import streamlit as st
+from src.blockchain_utils.credentials import get_client, get_account_credentials, get_indexer
+from src.services.game_engine_service import GameEngineService
+import algosdk
 
-def cases(case,position,xo,list):
-    if case[position]!='X' and case[position]!='Y':
-        case[position]=xo.upper()
-        list.append(str(position+1))
-        return True
-    else :
-        print('Space ',position+1,'is not empty')
-        #print_board(list)
-        return False
+client = get_client()
+indexer = get_indexer()
+
+acc_pk, acc_address = algosdk.account.generate_account()
+player_x_pk, player_x_address = algosdk.account.generate_account()
+player_o_pk, player_o_address = algosdk.account.generate_account()
+
+if "submitted_transactions" not in st.session_state:
+    st.session_state.submitted_transactions = []
+
+if "player_turn" not in st.session_state:
+    st.session_state.player_turn = "X"
+
+if "game_state" not in st.session_state:
+    st.session_state.game_state = ['-'] * 9
+
+if "x_state" not in st.session_state:
+    st.session_state.x_state = 0
+
+if "o_state" not in st.session_state:
+    st.session_state.o_state = 0
+
+if "game_state" not in st.session_state:
+    st.session_state.game_state = ['-'] * 9
+
+if "game_engine" not in st.session_state:
+    st.session_state.game_engine = GameEngineService(app_creator_pk=acc_pk,
+                                                     app_creator_address=acc_address,
+                                                     player_x_pk=player_x_pk,
+                                                     player_x_address=player_x_address,
+                                                     player_o_pk=player_o_pk,
+                                                     player_o_address=player_o_address)
+
+if "game_status" not in st.session_state:
+    st.session_state.game_status = 0
+
+if "is_app_deployed" not in st.session_state:
+    st.session_state.is_app_deployed = False
+
+if "is_game_started" not in st.session_state:
+    st.session_state.is_game_started = False
+
+st.title("Addresses")
+st.write(f"app_creator: {acc_address}")
+st.write(f"player_x: {player_x_address}")
+st.write(f"player_o: {player_o_address}")
+
+st.write("You need to fund those accounts on the following link: https://bank.testnet.algorand.network/")
 
 
-def cases_full(case):
-    ck=0
-    for c in case:
-        if c=='X'or c=='Y':
-            ck=1
+# Step 1: App deployment.
+
+def deploy_application():
+    if st.session_state.is_app_deployed:
+        return
+
+    app_deployment_txn_log = st.session_state.game_engine.deploy_application(client)
+    st.session_state.submitted_transactions.append(app_deployment_txn_log)
+    st.session_state.is_app_deployed = True
+
+
+st.title("Step 1: App deployment")
+st.write("In this step we deploy the Tic-Tac-Toe Stateful Smart Contract to the Algorand TestNetwork")
+
+if st.session_state.is_app_deployed:
+    st.success(f"The app is deployed on TestNet with the following app_id: {st.session_state.game_engine.app_id}")
+else:
+    st.error(f"The app is not deployed! Press the button below to deploy the application.")
+    _ = st.button("Deploy App", on_click=deploy_application)
+
+# Step 2: Start of the game
+st.title("Step 2: Mark the start of the game")
+st.write("In this step we make atomic transfer of 3 transactions that marks the start of the game.")
+
+
+def start_game():
+    if st.session_state.is_game_started:
+        return
+
+    start_game_txn_log = st.session_state.game_engine.start_game(client)
+    st.session_state.submitted_transactions.append(start_game_txn_log)
+    st.session_state.is_game_started = True
+
+
+if st.session_state.is_game_started:
+    st.success("The game has started")
+else:
+    st.error(f"The game has not started! Press the button below to start the game.")
+    _ = st.button("Start game", on_click=start_game)
+
+st.title("Step 3: Execute game actions")
+
+if st.session_state.player_turn == "X":
+    st.warning(f"Current player: {st.session_state.player_turn}")
+else:
+    st.success(f"Current player: {st.session_state.player_turn}")
+
+mark_position_idx = st.number_input(f'Action position',
+                                    value=0,
+                                    step=1)
+
+
+def to_binary(integer):
+    return format(integer, 'b').zfill(9)
+
+
+def get_game_status(indexer, app_id):
+    response = indexer.search_applications(application_id=app_id)
+    game_status_key = "R2FtZVN0YXRl"
+
+    for global_variable in response['applications'][0]['params']['global-state']:
+        if global_variable['key'] == game_status_key:
+            return global_variable['value']['uint']
+
+
+def play_action(action_idx):
+    try:
+        play_action_txn = st.session_state.game_engine.play_action(client,
+                                                                   player_id=st.session_state.player_turn,
+                                                                   action_position=action_idx)
+    except:
+        st.session_state.submitted_transactions.append(f"Rejected transaction. Tried to put "
+                                                       f"{st.session_state.player_turn} at {action_idx}")
+        return
+
+    st.session_state.game_state[action_idx] = st.session_state.player_turn
+    st.session_state.submitted_transactions.append(play_action_txn)
+    if st.session_state.player_turn == "X":
+        st.session_state.x_state = st.session_state.x_state | (1 << action_idx)
+        st.session_state.player_turn = "O"
+    else:
+        st.session_state.o_state = st.session_state.o_state | (1 << action_idx)
+        st.session_state.player_turn = "X"
+
+
+_ = st.button('Play Action', on_click=play_action,
+              args=(mark_position_idx,))
+
+st.title("Game state")
+
+for i in range(3):
+    cols = st.columns(3)
+    for j in range(3):
+        idx = i * 3 + j
+        if st.session_state.game_state[idx] == '-':
+            cols[j].info('-')
+        elif st.session_state.game_state[idx] == 'X':
+            cols[j].warning('X')
         else:
-            ck=0 
-            break
-    if ck==1:
-        print("It's a draw!!")
-        return True
-    else: return False
+            cols[j].success('O')
+
+st.subheader("Binary states")
+st.write(f"x_state: {st.session_state.x_state} == {to_binary(st.session_state.x_state)}")
+st.write(f"o_state: {st.session_state.o_state} == {to_binary(st.session_state.o_state)}")
+
+# Step 4:
+
+st.title("Step 4: Withdraw funds")
 
 
-def chek_winner(list):
-    result = ['123', '159', '456', '357', '963', '789', '741','852']
-    for i in result:
-        cc = 0
-        for j in list:
-            if j in i:
-                cc = cc+1
-            if cc == 3:
-                cc = 0
-                return True
-            if j == list[-1] and cc != 3:
-                cc = 0
-                break              
-    return False
+def check_game_status():
+    if st.session_state.is_game_started:
+        game_status = get_game_status(indexer, app_id=st.session_state.game_engine.app_id)
+        st.session_state.game_status = game_status
 
 
-def print_board(case):
-    num=['1','2','3','4','5','6','7','8','9']
-  
-    print(f'\n {case[6]} | {case[7]} | {case[8]}')
-    print('-----------')
-    print(f' {case[3]} | {case[4]} | {case[5]}')
-    print('-----------')
-    print(f' {case[0]} | {case[1]} | {case[2]}\n')
+st.write("Press the button below to use the indexer to query the global state of the application.")
+_ = st.button("Check the game status", on_click=check_game_status)
 
 
-def play():
-    done=False 
-    player1_score=0
-    player2_score=0
-    name={'player1':'','player2':''}
-    while True:
-        name['player1']=input('Hey player1 Enter your first name:').title()
-        if name['player1']!='':
-            break
-        else :
-            print("Please reenter your name!")
-    while True:
-        name['player2']=input('Hey player2 Enter your first name:').title()
-        if name['player2']!='':
-            break
-        else :
-            print("Please reenter your name!")
-   
-    while done!=True:
-        k = []
-        case=['1','2','3','4','5','6','7','8','9']
-        print('Picking up a random player to start...')
-        from random import randint
-        n=randint(1, 2)
-  
-        if n==1:
-            print('{} is going to start'.format(name['player1']),'first')
-            while True:
-                XO1 = input('Chose between X or Y:')  
-                if XO1.upper()=='X' or XO1.upper()=='Y':
-                    break
-                else :
-                    print( name['player1']+" Please chose between X and Y!")
- 
-            if XO1.upper()=='X':
-                XO2='Y'
-            else:
-                XO2 = 'X'
-            k.append(1)
-            k.append(2)
-        else : 
-            print('{} is going to start'.format(name['player2']),'first')
-           
-            while True:
-                XO2 = input('Chose between X or Y:')   
-                if  XO2.upper()=='X' or  XO2.upper()=='Y':
-                    break
-                else :
-                    print(name['player2']+" Please chose between X and Y!")
+def withdraw_funds(winner):
+    if winner is None:
+        try:
+            fund_escrow_txn = st.session_state.game_engine.fund_escrow(client=client)
+            st.session_state.submitted_transactions.append(fund_escrow_txn)
 
-            if XO2.upper() == 'X':
-                XO1 = 'Y'
-            else:
-                XO1 = 'X'
-            k.append(2)
-            k.append(1)
-        end= False
-        l1=[]
-        l2=[]
-        c=0
-        print('\n||---',name['player2'],'Score:',player2_score,'---||---',name['player1'],'Score:',player1_score,'---||')
+            txn_description = st.session_state.game_engine.tie_money_refund(client)
+            st.session_state.submitted_transactions.append(txn_description)
+        except:
+            st.session_state.submitted_transactions.append("Rejected transaction. Unsuccessful withdrawal.")
+    else:
+        try:
+            fund_escrow_txn = st.session_state.game_engine.fund_escrow(client=client)
+            st.session_state.submitted_transactions.append(fund_escrow_txn)
 
-        while end !=True:
-            for i in k:
-                if end== True:
-                    break
-                print_board(case)
-                if i==1:
-                    while True:
-                        while True:
-                            c = input('{} Where do you want to put your {}:'.format(name['player1'],XO1))
-                            if c!='' and not c.isalpha():
-                                break
-                            else:
-                                print('please chose a number between 1 & 9!')
-                        print('\033[H\033[J')
-                        if cases(case,int(c)-1,XO1,l1)==True:
-                            break
-                        else:
-                            print('please chose !!')
-                            print_board(case)
-                       
-                else :
-                    while True:
-                        while True:
-                            c = input('{} Where do you want to put your {}:'.format(name['player2'],XO2))
-                            
-                            if c!='' and not c.isalpha():
-                                break
-                            else:
-                                print('please chose a number between 1 & 9!')
-                        print('\033[H\033[J')
-                        if cases(case, int(c)-1, XO2,l2)==True:
-                            break
-                        else:
-                            print('please chose one of the free spaces available!!')
-                            print_board(case)
-                        
-                           
-                if len(l1)>=3 :
-                 if chek_winner(l1):
-                     print(name['player1'],'you are the winner!!')
-                     player1_score+=1
-                     print_board(case)
-                     end=True
-                     break
-                        
-                if len(l2) >= 3:
-                    if chek_winner(l2):
-                         print(name['player2'],'You are the WINNER!!')
-                         player2_score+=1
-                         print_board(case)
-                         end=True
-                         break
-                if cases_full(case) == True:
-                    end=True
-                    print_board(case)
-                    break
-        while True:
-            answer =input('If you want to continue playing type YES/Y else type NO/N ')
-            if answer.upper()=='YES' or answer.upper()=='Y' :
-                print("Lets go again...")
-                break
-            elif answer.upper()=='NO' or answer.upper()=='N' : 
-                done=True  
-                player1_score=0
-                player2_score=0
-                print ('Thanks for playing. See you next time ;)')
-                break
-            else :
-                print('Please chose from one of the options you have!!')
-            
-               
-play()
+            txn_description = st.session_state.game_engine.win_money_refund(client, player_id=winner)
+            st.session_state.submitted_transactions.append(txn_description)
+        except:
+            st.session_state.submitted_transactions.append("Rejected transaction. Unsuccessful withdrawal.")
 
+
+if st.session_state.game_status == 0:
+    st.write("The game is still active.")
+else:
+    winner = None
+    if st.session_state.game_status == 1:
+        st.balloons()
+        st.success("Player X won the game.")
+        winner = "X"
+    elif st.session_state.game_status == 2:
+        st.balloons()
+        st.success("Player O won the game.")
+        winner = "O"
+    elif st.session_state.game_status == 3:
+        st.warning("The game has ended with a tie.")
+
+    _ = st.button('Withdraw funds', on_click=withdraw_funds,
+                  args=(winner,))
+
+st.title("Submitted transactions")
+
+for txn in st.session_state.submitted_transactions:
+    if "Rejected transaction." in txn:
+        st.error(txn)
+    else:
+        st.success(txn)
