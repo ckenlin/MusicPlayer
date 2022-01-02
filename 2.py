@@ -60,7 +60,7 @@ class TicTacToe(object):
     
     def get_player_input(self):
         """get player's input"""
-        print "Current player: ", self.get_turn()
+        print ("Current player: "), self.get_turn()
         return raw_input("Please input your move: [row], [column]\n")
     
     def evaluate(self):
