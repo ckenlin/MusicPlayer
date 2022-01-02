@@ -134,7 +134,7 @@ class TicTacToe(object):
             return False
         # check whether position is free
         elif not self.board.is_cell_free(row, col):
-            print "that position is not empty"
+            print ("that position is not empty")
             return False
         else:
             return True
