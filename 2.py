@@ -119,7 +119,7 @@ class TicTacToe(object):
             posList = move.split(",", 2)
             [row, col]  = [int(posList[0]), int(posList[1])]
         except:
-            print "please specify two integer coordinates as [row], [column]"
+            print ("please specify two integer coordinates as [row], [column]")
             return None
         if self.valid_move(row, col):
             return [row, col]            
