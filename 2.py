@@ -166,19 +166,19 @@ class Board:
         row3 = self.cells[2]
         
         # print first row
-        print row1[0] + "|" + row1[1] + "|" + row1[2]
+        print (row1[0] + "|" + row1[1] + "|" + row1[2])
         
         # print horizontal line
         print "-----"
         
         # print second row
-        print row2[0] + "|" + row2[1] + "|" + row2[2]
+        print (row2[0] + "|" + row2[1] + "|" + row2[2])
         
         # print horizontal line
         print "-----"
         
         # print third row    
-        print row3[0] + "|" + row3[1] + "|" + row3[2]
+        print (row3[0] + "|" + row3[1] + "|" + row3[2])
     
     def mark_move(self, row, col, sign):
         """mark move (row, col) of sign on board"""
