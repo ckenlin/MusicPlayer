@@ -35,7 +35,7 @@ class TicTacToe(object):
                 continue
         
         self.board.show_board()
-        print self.result
+        print (self.result)
         if self.play_again():
             self.start()
     
