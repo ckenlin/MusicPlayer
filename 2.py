@@ -22,7 +22,7 @@ class TicTacToe(object):
         while self.playing:
             self.board.show_board()
             raw_move = self.get_player_input()
-            print "\n"
+            print ("\n")
             # parse and check move validity of move
             move = self.parse_move(raw_move)
             if move:
@@ -31,7 +31,7 @@ class TicTacToe(object):
                 self.evaluate()
                 self.switch_turn()
             else:
-                print "That's not a valid move, please try again"
+                print ("That's not a valid move, please try again")
                 continue
         
         self.board.show_board()
